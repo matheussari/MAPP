@@ -1,26 +1,22 @@
 # MAPP - Military Aircraft Performance Prediction
 
-MAPP is a data science project focused on predicting military aircraft performance using machine learning models and publicly available aircraft specification data.
+MAPP is a long-term Data Science project focused on analyzing and predicting military aircraft performance using machine learning and publicly available aircraft specification data.
 
-## Version
+## Current Version
 
-Current version: **v1.1**
+**MAPP v1.2 - Feature Engineering, Model Tuning and Stability**
 
-## Project Objective
+The current prediction target is:
 
-The current objective is to predict the **combat radius** of military aircraft using supervised machine learning regression models.
+`Combat_Radius_km`
 
-Target variable: `Combat_Radius_km`
+The project currently uses a dataset containing 48 military aircraft and 45 variables.
 
-## Dataset
+## Project Evolution
 
-The dataset contains technical specifications of military fighter aircraft, including weight, speed, range, engine characteristics, radar information, combat record variables, and operational details.
+### Version 1.0 - Initial Modeling
 
-Dataset source: Kaggle - Military Aircraft Dataset by OXCART.
-
-## Version 1.0 Summary
-
-Version 1.0 created the first machine learning pipeline for predicting `Combat_Radius_km`.
+Version 1.0 created the first machine learning workflow for combat radius prediction.
 
 The following regression models were evaluated:
 
@@ -33,67 +29,189 @@ The following regression models were evaluated:
 - Lasso Regression
 - Ridge Regression
 
-In version 1.0, the best-performing model based on a single train-test split was:
+Random Forest achieved the best result using a single train-test split.
 
-**Random Forest Regressor**
+### Version 1.1 - Validation and Baselines
 
-Main v1.0 test metrics:
+Version 1.1 improved model evaluation by introducing:
 
-- RMSE Test: approximately 484 km
-- MAE Test: approximately 356 km
-- R2 Test: approximately 0.296
-
-## Version 1.1 Update
-
-Version 1.1 improves the evaluation process by adding:
-
-- Baseline models
-- Ferry Range Linear Baseline
+- Mean and median baseline models
+- Ferry Range Linear baseline
 - Feature set comparison
 - Cross-validation
-- More robust model comparison
+- Training and validation performance comparison
 
-The feature sets evaluated in v1.1 were:
+XGBoost with the Engineering Only feature set achieved the best average cross-validation RMSE, but showed strong signs of overfitting.
 
-- Engineering Only
-- Engineering + Operational
-- All Features
+### Version 1.2 - Feature Engineering, Tuning and Interpretation
 
-## Best Model in v1.1
+Version 1.2 introduced:
 
-Based on cross-validation RMSE, the best-performing model in version 1.1 was:
+- Independent version setup
+- Data quality audit
+- Aviation-related feature engineering
+- Repeated cross-validation
+- Derived feature comparison
+- Controlled hyperparameter tuning
+- Model stability analysis
+- Feature importance
+- Repeated out-of-fold predictions
+- Aircraft-level error analysis
+- Interactive Plotly visualizations
 
-**XGBoost with the Engineering Only feature set**
+## Feature Engineering
 
-Main v1.1 cross-validation metrics:
+Seven derived engineering features were created:
 
-- RMSE CV Mean: approximately 365 km
-- MAE CV Mean: approximately 276 km
-- R2 CV Mean: approximately 0.356
+- `Weight_Ratio`
+- `Fuel_Fraction`
+- `Weapon_Load_Fraction`
+- `Total_Thrust_kN`
+- `Thrust_to_Weight_Ratio_Approx`
+- `Ferry_Range_per_Fuel_kg`
+- `Development_Time_years`
 
-## Main Findings
+The Derived Only feature set was not sufficient to outperform the original engineering variables.
 
-- The Ferry Range Linear Baseline performed better than simple mean and median baselines.
-- `Ferry_Range_km` is a strong individual predictor of `Combat_Radius_km`.
-- Engineering-only features produced the strongest model results.
-- Using all available features did not improve performance and often made models less stable.
-- XGBoost achieved the lowest cross-validation RMSE, but showed signs of overfitting.
-- Random Forest remained a strong and more stable candidate model.
+However, derived features improved performance when combined with the original specifications.
 
-## Main Limitation
+For Random Forest, `Weight_Ratio` and `Ferry_Range_per_Fuel_kg` were the most useful derived features during feature removal comparison.
 
-The dataset contains only 48 aircraft. Because of this, model performance should still be interpreted with caution, even with cross-validation.
+## Validation Strategy
 
-## Next Steps
+Version 1.2 uses repeated cross-validation:
+
+- 5 folds
+- 10 repetitions
+- 50 validation results per experiment
+
+The main evaluation metrics are:
+
+- Root Mean Squared Error (RMSE)
+- Mean Absolute Error (MAE)
+- Coefficient of Determination (R²)
+- Metric standard deviation
+- Training-validation performance gap
+
+## Baseline
+
+The strongest baseline was a linear regression using only `Ferry_Range_km`.
+
+Baseline results:
+
+- RMSE CV Mean: approximately 424 km
+- MAE CV Mean: approximately 361 km
+- R² CV Mean: approximately 0.05
+
+## Final Model
+
+The final selected model for MAPP v1.2 was:
+
+**Tuned XGBoost with Engineering + Derived features**
+
+Final repeated cross-validation results:
+
+- RMSE CV Mean: approximately **350 km**
+- RMSE CV Standard Deviation: approximately **86 km**
+- MAE CV Mean: approximately **294 km**
+- R² CV Mean: approximately **0.385**
+- Training R² CV Mean: approximately **0.886**
+
+Compared with the Ferry Range Linear baseline, Tuned XGBoost reduced average RMSE by approximately:
+
+- **74 km**
+- **17.5%**
+
+Hyperparameter tuning also substantially reduced the XGBoost training-validation gap.
+
+## Main Feature Importance Findings
+
+The most important variables for Tuned XGBoost included:
+
+- `Ferry_Range_km`
+- `Cruise_Speed_kmh`
+- `Empty_Weight_kg`
+- `Fuel_Consumption_Cruise_kg_h`
+- `Ferry_Range_per_Fuel_kg`
+- `MTOW_kg`
+
+The derived feature `Ferry_Range_per_Fuel_kg` appeared among the five most important variables.
+
+Feature importance does not represent causality, and correlated features may share importance.
+
+## Aircraft-Level Error Analysis
+
+Repeated out-of-fold evaluation generated 10 predictions for each aircraft, resulting in 480 predictions.
+
+Some of the lowest mean absolute percentage errors were achieved for:
+
+- J-16 Flanker: approximately 3.4%
+- F-35A Lightning II: approximately 4.4%
+- MiG-35 Fulcrum-F: approximately 6.2%
+- Su-27 Flanker: approximately 7.7%
+
+The model performed better within the central range represented in the dataset.
+
+It tended to:
+
+- Underestimate aircraft with unusually high combat radius values
+- Overestimate several aircraft with relatively low combat radius values
+
+## Main Limitations
+
+- The dataset contains only 48 aircraft.
+- Some specifications may be estimated, unavailable, or classified.
+- Model development and evaluation use the same small dataset.
+- No independent external test dataset is currently available.
+- Related aircraft variants may appear in both training and validation folds.
+- Derived engineering features are approximations.
+- Results should be interpreted as exploratory.
+
+The model should not be used for operational, engineering, or military decision-making.
+
+## Future Development
 
 Future versions of MAPP may focus on:
 
-- Expanding the dataset with more aircraft and verified sources
-- Creating aviation-related engineered features
-- Testing feature selection methods
-- Applying light hyperparameter tuning
-- Comparing model stability across repeated validation strategies
+- Expanding the dataset
+- Recording data sources and confidence levels
+- Separating unknown values from valid zeros
+- Creating aircraft family labels
+- Applying grouped validation by aircraft family
+- Evaluating additional prediction targets
+- Reorganizing the project into reusable modules
+
+Deep Learning is not recommended for the current tabular dataset due to its limited number of observations.
+
+Future Deep Learning applications may use different data modalities, such as aircraft image classification with transfer learning.
+
+## Dataset
+
+Dataset source:
+
+**Military Aircraft Dataset by OXCART - Kaggle**
+
+The dataset contains aircraft specifications related to:
+
+- Speed
+- Range
+- Weight
+- Engines
+- Fuel
+- Weapons
+- Radar
+- Cost
+- Operational status
+- Combat record
+
+## Repository Files
+
+- `military_aircraft_performance_prediction.ipynb` - Complete analysis through MAPP v1.2
+- `fighter_aircraft_dataset_v10.csv` - Aircraft dataset
+- `README.md` - Project documentation
 
 ## Disclaimer
 
-This project is for educational and portfolio purposes only. It uses publicly available data and does not represent classified, operational, or official military performance information.
+This project is intended for educational and portfolio purposes only.
+
+It uses publicly available data and does not represent classified, operational, official, or guaranteed military aircraft performance information.
